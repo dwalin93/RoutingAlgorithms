@@ -1,6 +1,7 @@
 import os
 import networkx as nx
 import math 
+import collections
 
 cwd = os.getcwd()
 print(cwd)
@@ -67,6 +68,41 @@ def calcDistance(network,edg):
     print(coords['startEast'])
     return distances 
 
+def calcAdjacency(network):
+    adjacency = [(n, nbrdict) for n, nbrdict in network.adjacency()] 
+    return adjacency
+
+def getAdjacentAndNeigborNodes(adjacentNodes):
+    nodeAdjacencyNeighborsDict = collections.defaultdict(list) 
+    for idx, x in enumerate(adjacentNodes):
+        node = adjacentNodes[idx][0]
+        keys = adjacentNodes[idx][1].keys()
+        nodeAdjacencyNeighborsDict.update({node:{'adj':list(keys)}})
+        
+    keys = nodeAdjacencyNeighborsDict.keys()
+    for idy, y in enumerate(nodeAdjacencyNeighborsDict):
+        listOfValues = list(nodeAdjacencyNeighborsDict.values())[idy]['adj']
+        listOfKeys = getKeysByValues(nodeAdjacencyNeighborsDict,listOfValues)
+        listOfKeysWithoutDups = removeDuplicatesFromList(listOfKeys)
+        nodeAdjacencyNeighborsDict[list(keys)[idy]].update({'neighbours': listOfKeysWithoutDups})
+    return nodeAdjacencyNeighborsDict
+
+def removeDuplicatesFromList(x):
+  return list(dict.fromkeys(x))
+
+def getKeysByValues(dictOfElements, listOfValues):
+    listOfKeys = list()
+    listOfItems = dictOfElements.items()
+    for item  in listOfItems:
+        idx = 0
+        while idx < len(item[1]['adj']):
+            if item[1]['adj'][idx] in listOfValues:
+                listOfKeys.append(item[0]) 
+                idx+=1
+            else:
+                idx+=1       
+    return  listOfKeys 
+
 def main():
     #Read in edges
     pathToEdges = os.path.join(cwd,'data','Muenster_edges.shp')
@@ -90,11 +126,39 @@ def main():
     dijkstra = nx.dijkstra_path(network,4,8312,weight='dist'[0])
     print(dijkstra)
     shortestPath = drawShortestPath(network,dijkstra,posNodes)
-    #Get adjacent edges
+    #Get edges of each node ()
+#    edgesOfNodes = {}
+#    for idx,x in enumerate(network.nodes()):
+#        node = list(network.nodes())[idx]
+#        edges = network.edges(node)
+#        edgesOfNodes.update({node:list(edges)})
+#    print(edgesOfNodes) 
+#    print(list(edgesOfNodes.items())[0][0]) 
+#    
+#    #Find dublicate keys using flip method
+#    flipped = {} 
+#    for key, values in edgesOfNodes.items(): 
+#        for value in values:
+#            if value not in flipped: 
+#                flipped[value] = [key] 
+#            else: 
+#                flipped[value].append(key) 
+#  
+#                
+#    print(list(flipped))
     
+    #Reminder for turns: 
+    #Compute dijkstra, then change costs of shortest path if there is a turn, compute dijkstra again...
+    adjacency = calcAdjacency(network)
+    adjacentAndNeighborNodesDict = getAdjacentAndNeigborNodes(adjacency)
+    print(adjacentAndNeighborNodesDict)
+
+          
+              
+                
+        
     
-    
-    
+   
     
     
 
