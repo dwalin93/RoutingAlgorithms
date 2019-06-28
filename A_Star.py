@@ -2,9 +2,28 @@ import os
 import networkx as nx
 import math 
 import collections
+import matplotlib.pyplot as plt
 
 cwd = os.getcwd()
-print(cwd)
+print('cwd: ',cwd)
+
+#######################################################
+#################### Input data #######################
+#######################################################
+
+pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area.shp')
+startNode = 1 # as in the input data
+endNode = 70 # as in the input data
+# Assign weight:
+# 'LS' = Local Score
+# 'DS' = Distant Score
+# 'TS' = Total Score <- not implemented yet
+networkWeight = 'DS'
+
+
+#######################################################
+#################### Functions ########################
+#######################################################
 
 def readData(path):
     return nx.read_shp(path)
@@ -59,14 +78,30 @@ def calcDistance(network,edg):
         coords = list(network.edges(data=True))[idx][2]['coord']
         distance = round(math.sqrt(((coords['endNorth']-coords['startNorth'])**2) +
                                    ((coords['endEast']-coords['startEast'])**2)),2)
-        distances.update({list(edg)[idx]:{float(distance)}})
-    #Try with algorithm
-    print(distances)
-    print(coords['endNorth'])
-    print(coords['endEast'])
-    print(coords['startNorth'])
-    print(coords['startEast'])
+        distances.update({list(edg)[idx]:float(distance)})
     return distances 
+
+def createDictFromLocalScore(edges,edg):
+    LS = []
+    LSDict = {}
+           
+    for x in list(edges.edges(data=True)):
+        LS.append(x[2]['LS'])
+            
+    for idx, x in enumerate(LS):
+        LSDict.update({list(edg)[idx]:LS[idx]})
+    return LSDict
+
+def createDictFromDistantScore(edges,edg):
+    DS = []
+    DSDict = {}
+           
+    for x in list(edges.edges(data=True)):
+        DS.append(x[2]['DS'])
+            
+    for idx, x in enumerate(DS):
+        DSDict.update({list(edg)[idx]:DS[idx]})
+    return DSDict
 
 def calcAdjacency(network):
     adjacency = [(n, nbrdict) for n, nbrdict in network.adjacency()] 
@@ -122,15 +157,13 @@ def getKeysByValues(dictOfElements, listOfValues):
 from heapq import heappush, heappop
 from itertools import count
 
-#from networkx.utils import not_implemented_for
-
-
-
-def astar_path_Kasia(G, source, target, weight, coordDict):
+def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore and add later LocalScore
     """Returns a list of nodes in a shortest path between source and target
     using the A* ("A-star") algorithm.
     
     Heurestic function changed to include the dictionairy with the coordinates
+    
+    Weight function will be amended on the basics of the distance to the target node
 
     """
     def heuristic_Kasia(theNode, theTarget, coordDict):
@@ -152,6 +185,11 @@ def astar_path_Kasia(G, source, target, weight, coordDict):
 
     push = heappush
     pop = heappop
+    
+    # Weight of the Global Score and Local Score will depend on the distance of each node to the target
+    
+    # First calculate the geographical distance to the target
+    distanceToTarget = heuristic_Kasia(source, target, coordDict)
 
     # The queue stores priority, node, cost to reach, and parent.
     # Uses Python heapq to keep in priority order.
@@ -199,44 +237,69 @@ def astar_path_Kasia(G, source, target, weight, coordDict):
                 if qcost <= ncost:
                     continue
             else:
-                h = heuristic_Kasia(neighbor, target, coordDict) # niech się♣ oblicza dla kązdego neighbour
+                h = heuristic_Kasia(neighbor, target, coordDict) # 
             enqueued[neighbor] = ncost, h
             push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
 
     raise nx.NetworkXNoPath("Node %s not reachable from %s" % (target, source))
 
 #######################################################
-########### End of the A Star source code #############
+####################### Main ##########################
 #######################################################
 
 def main():
-    #Read in edges
-    pathToEdges = os.path.join(cwd,'data','Muenster_edges.shp')
-    print(pathToEdges)
+    ##### Read in edges #####
+    print('input data: ',pathToEdges)
+    
+    ##### Pre-process #####
     edges = nx.read_shp(pathToEdges)
     posNodes = getPositionOfNodesFromEdges(edges)
     posEdges = getPositionOfEdges(edges)
+    # Create a list of tuples containing the start and end node of an edge
     edg = [tuple(key for key,value in posNodes.items() if value in line) for line in posEdges]
+    # Create the network based on the position of nodes and the edges defined by start and end nodes IDs
     network = createNetwork(posNodes,edg)
     drawNetwork(network,posNodes)
-    #Add Weight to edges
-    #Get coordinates of edges
+    
+    ##### Add Weight to edges #####
+    # 1. Get coordinates of edges and apply to the network
     coordinates = createDictFromEdgesCoords(edges,edg)
     nx.set_edge_attributes(network, name='coord', values=coordinates)
-    #Calc Distance
+    
+    # 2. Get Local Score of edges and apply to the network
+    LocalScore = createDictFromLocalScore(edges,edg)
+    nx.set_edge_attributes(network, name='LS', values=LocalScore)
+    
+    # 3. Get Distant Score of edges and apply to the network
+    DistantScore = createDictFromDistantScore(edges,edg)
+    nx.set_edge_attributes(network, name='DS', values=DistantScore)
+    
+    # 4. Calculate the distance and apply to the network
     distance = calcDistance(network,edg)   
-    #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance) 
-    #Dijkstra
-    #dijkstra = nx.dijkstra_path(network,1,70,weight='dist'[0])
-    #print('Prints results of Dijkstra algorithm')
-    #print(dijkstra)
-    #A Star
-    astar = astar_path_Kasia(network,1,700,'dist'[0], posNodes) ## weight has to be chnged to the landmark score
-    print('Prints results of A Star algorithm')
+    
+    ##### Run A Star alghoritm #####
+    # Assign the input node numbers to networkx numbers
+    print('Start node: ', startNode)
+    print('End node: ', endNode)
+    print('Network cost: ', networkWeight)
+    astar = astar_path_Kasia(network,startNode,endNode,networkWeight, posNodes)
+    print('Results of A Star algorithm:')
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
+    
+    ##### Save the input nodes end edges #####
+    shpNodes = []
+    shpEdges = []
+    for node in astar:
+        shpNodes.append(list(edges.edges(data=True))[node][2]['OBJECTID'])
+        shpEdges.append(list(edges.edges(data=True))[node][2]['streetID'])
+        
+    print('OBJECTID')
+    print(shpNodes)
+    print('streetID')
+    print(shpEdges)
           
 main()             
                 
