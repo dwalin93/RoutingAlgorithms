@@ -12,8 +12,9 @@ print('cwd: ',cwd)
 #######################################################
 
 pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area.shp')
-startNode = 2903 # as in the input data
-endNode = 5040 # as in the input data
+ODnumber = 1
+startNode = 395 # as in the input data
+endNode = 7775 # as in the input data
 # Assign weight:
 # 'LS' = Local Score
 # 'DS' = Distant Score
@@ -53,7 +54,7 @@ def getPositionOfNodesFromEdges(edges):
         coord2 = value[1][1]
         u = value[1][2]['u']
         v = value[1][2]['v']
-        posDict.update({u:coord1})
+        posDict.update({u:coord1})  
         posDict.update({v:coord2})
    return posDict
 
@@ -263,7 +264,6 @@ def main():
     edges = nx.read_shp(pathToEdges)
     posNodes = getPositionOfNodesFromEdges(edges)
     posEdges = getPositionOfEdges(edges)
-    print(list(posNodes.items())[0][0])
     # Create a list of tuples containing the start and end node of an edge
     edg = [tuple(key for key,value in posNodes.items() if value in line) for line in posEdges]
     # Create the network based on the position of nodes and the edges defined by start and end nodes IDs
@@ -296,6 +296,15 @@ def main():
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
+    
+    # Save results
+    # Subset a graph
+    astar_result = network.subgraph(astar)
+    #print(list(astar_result.edges(data=True))[0])
+    #print(list(network.edges(data=True))[0])
+    # Save as shp
+    nx.write_shp(astar_result, '/Results')#+str(ODnumber))
+    
           
 main()             
                 
