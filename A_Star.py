@@ -12,8 +12,8 @@ print('cwd: ',cwd)
 #######################################################
 
 pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area.shp')
-startNode = 1 # as in the input data
-endNode = 70 # as in the input data
+startNode = 2903 # as in the input data
+endNode = 5040 # as in the input data
 # Assign weight:
 # 'LS' = Local Score
 # 'DS' = Distant Score
@@ -102,7 +102,31 @@ def createDictFromDistantScore(edges,edg):
     for idx, x in enumerate(DS):
         DSDict.update({list(edg)[idx]:DS[idx]})
     return DSDict
-
+######################## DOESNT WORK
+def assignOrigin(network,edges,startNode): # 2903
+    origin = 0
+    print(list(network.edges())[0])
+    for n in list(enumerate(edges.edges)):
+        print(n[0])
+        if list(edges.edges(data=True))[n[0]][2]['u'] == startNode:
+            origin = n[0]
+            print(origin)
+            print('first node',list(network.edges())[origin])
+            print(list(edges.edges(data=True))[n[0]])
+            origin = list(network.edges())[origin][0]
+            break
+    return origin
+    
+def assignDestination(network,edges,endNode): #5040
+    destination = 0
+    for n in enumerate(edges.edges):
+        if list(edges.edges(data=True))[n[0]][2]['v'] == endNode:
+            destination = list(network.edges())[n[0]][1]
+            print(destination)
+            print(list(edges.edges(data=True))[n[0]])
+            break
+    return destination
+######################## DOESNT WORK
 def calcAdjacency(network):
     adjacency = [(n, nbrdict) for n, nbrdict in network.adjacency()] 
     return adjacency
@@ -252,6 +276,7 @@ def main():
     print('input data: ',pathToEdges)
     
     ##### Pre-process #####
+    # Build network
     edges = nx.read_shp(pathToEdges)
     posNodes = getPositionOfNodesFromEdges(edges)
     posEdges = getPositionOfEdges(edges)
@@ -260,6 +285,9 @@ def main():
     # Create the network based on the position of nodes and the edges defined by start and end nodes IDs
     network = createNetwork(posNodes,edg)
     drawNetwork(network,posNodes)
+    # Assign the input node IDs to network nodes IDs
+    origin = assignOrigin(network,edges,startNode)
+    destination = assignDestination(network,edges,endNode)
     
     ##### Add Weight to edges #####
     # 1. Get coordinates of edges and apply to the network
@@ -279,12 +307,11 @@ def main():
     nx.set_edge_attributes(network, name='dist', values=distance) 
     
     ##### Run A Star alghoritm #####
-    # Assign the input node numbers to networkx numbers
     print('Start node: ', startNode)
     print('End node: ', endNode)
     print('Network cost: ', networkWeight)
-    astar = astar_path_Kasia(network,startNode,endNode,networkWeight, posNodes)
-    print('Results of A Star algorithm:')
+    astar = astar_path_Kasia(network,origin,destination,networkWeight, posNodes)
+    print('Results of A Star algorithm, using networx IDs:')
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
@@ -296,7 +323,7 @@ def main():
         shpNodes.append(list(edges.edges(data=True))[node][2]['OBJECTID'])
         shpEdges.append(list(edges.edges(data=True))[node][2]['streetID'])
         
-    print('OBJECTID')
+    print('nodeID')
     print(shpNodes)
     print('streetID')
     print(shpEdges)
