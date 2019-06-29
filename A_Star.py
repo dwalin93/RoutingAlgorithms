@@ -49,10 +49,10 @@ def drawShortestPath(network,shortestPath,posNodes):
 def getPositionOfNodesFromEdges(edges):
    posDict = {}
    for value in enumerate(edges.edges(data=True)):
-        coord1 = value[0]
-        coord2 = value[1]
-        u = value[2]['u']
-        v = value[2]['v']
+        coord1 = value[1][0]
+        coord2 = value[1][1]
+        u = value[1][2]['u']
+        v = value[1][2]['v']
         posDict.update({u:coord1})
         posDict.update({v:coord2})
    return posDict
@@ -109,31 +109,7 @@ def createDictFromDistantScore(edges,edg):
     for idx, x in enumerate(DS):
         DSDict.update({list(edg)[idx]:DS[idx]})
     return DSDict
-######################## DOESNT WORK
-def assignOrigin(network,edges,startNode): # 2903
-    origin = 0
-    print(list(network.edges())[0])
-    for n in list(enumerate(edges.edges)):
-        print(n[0])
-        if list(edges.edges(data=True))[n[0]][2]['u'] == startNode:
-            origin = n[0]
-            print(origin)
-            print('first node',list(network.edges())[origin])
-            print(list(edges.edges(data=True))[n[0]])
-            origin = list(network.edges())[origin][0]
-            break
-    return origin
-    
-def assignDestination(network,edges,endNode): #5040
-    destination = 0
-    for n in enumerate(edges.edges):
-        if list(edges.edges(data=True))[n[0]][2]['v'] == endNode:
-            destination = list(network.edges())[n[0]][1]
-            print(destination)
-            print(list(edges.edges(data=True))[n[0]])
-            break
-    return destination
-######################## DOESNT WORK
+
 def calcAdjacency(network):
     adjacency = [(n, nbrdict) for n, nbrdict in network.adjacency()] 
     return adjacency
@@ -287,6 +263,7 @@ def main():
     edges = nx.read_shp(pathToEdges)
     posNodes = getPositionOfNodesFromEdges(edges)
     posEdges = getPositionOfEdges(edges)
+    print(list(posNodes.items())[0][0])
     # Create a list of tuples containing the start and end node of an edge
     edg = [tuple(key for key,value in posNodes.items() if value in line) for line in posEdges]
     # Create the network based on the position of nodes and the edges defined by start and end nodes IDs
@@ -319,18 +296,6 @@ def main():
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
-    
-    ##### Save the input nodes end edges #####
-    shpNodes = []
-    shpEdges = []
-    for node in astar:
-        shpNodes.append(list(edges.edges(data=True))[node][2]['OBJECTID'])
-        shpEdges.append(list(edges.edges(data=True))[node][2]['streetID'])
-        
-    print('nodeID')
-    print(shpNodes)
-    print('streetID')
-    print(shpEdges)
           
 main()             
                 
