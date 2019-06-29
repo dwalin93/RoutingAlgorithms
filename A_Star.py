@@ -46,9 +46,16 @@ def drawShortestPath(network,shortestPath,posNodes):
     nx.draw_networkx_edges(network,posNodes,edge_color=edge_colors)
     return
 
-def getPositionOfNodesFromEdges(nodes):
-    pos = {index:value for index,value in enumerate(nodes.nodes())}
-    return pos
+def getPositionOfNodesFromEdges(edges):
+   posDict = {}
+   for value in enumerate(edges.edges(data=True)):
+        coord1 = value[0]
+        coord2 = value[1]
+        u = value[2]['u']
+        v = value[2]['v']
+        posDict.update({u:coord1})
+        posDict.update({v:coord2})
+   return posDict
 
 def getPositionOfEdges(edges):
     lines = [set(x) for x in edges.edges()]
@@ -285,9 +292,6 @@ def main():
     # Create the network based on the position of nodes and the edges defined by start and end nodes IDs
     network = createNetwork(posNodes,edg)
     drawNetwork(network,posNodes)
-    # Assign the input node IDs to network nodes IDs
-    origin = assignOrigin(network,edges,startNode)
-    destination = assignDestination(network,edges,endNode)
     
     ##### Add Weight to edges #####
     # 1. Get coordinates of edges and apply to the network
@@ -310,7 +314,7 @@ def main():
     print('Start node: ', startNode)
     print('End node: ', endNode)
     print('Network cost: ', networkWeight)
-    astar = astar_path_Kasia(network,origin,destination,networkWeight, posNodes)
+    astar = astar_path_Kasia(network,startNode,endNode,networkWeight, posNodes)
     print('Results of A Star algorithm, using networx IDs:')
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
