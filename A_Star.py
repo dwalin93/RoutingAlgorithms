@@ -303,7 +303,7 @@ def main():
     #print(list(astar_result.edges(data=True))[0])
     #print(list(network.edges(data=True))[0])
     # Save as shp
-    nx.write_shp(astar_result, '/Results')#+str(ODnumber))
+    nx.write_shp(astar_result, './Results')
     
           
 main()             
