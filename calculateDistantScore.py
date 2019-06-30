@@ -8,6 +8,7 @@ Created on Sun Jun 30 16:23:46 2019
 import os
 from osgeo import ogr
 import json
+import csv
 
 # Calculate the distant score fot the nodes.
 # Import sightlines and buildings with the global score. 
@@ -69,6 +70,13 @@ def nodeDSfromShp(sightlineDS, buildingsGS):
         
         #sightlineBuildings[s][1] = buildingID
     return nodesBuildings
-        
+
+       
 buildingsGS = buildingGlobalScoreFromShp(r"data_Mutaz/Buildings_Aassee_Scores.shp")
 nodesWithGS = nodeDSfromShp(r"data_Mutaz/Muenster_sightlines.shp",buildingsGS)
+
+with open('test.csv', 'w') as f:
+    for key in nodesWithGS.keys():
+        f.write("%s,%s\n"%(key,nodesWithGS[key]))
+
+#addDistantScoreToNodes("data_Maicol/Aassee_Nodes.shp",nodesWithGS)

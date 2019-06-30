@@ -11,8 +11,13 @@ print('cwd: ',cwd)
 #################### Input data #######################
 #######################################################
 
-pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area.shp')
+pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area_with_DS.shp')
 ODnumber = 1
+# OD pairs:
+# 395 - 7775
+# 775 - 2196
+# 2196 - 6767
+
 startNode = 395 # as in the input data
 endNode = 7775 # as in the input data
 # Assign weight:
@@ -196,8 +201,11 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
     
     # Weight of the Global Score and Local Score will depend on the distance of each node to the target
     
-    # First calculate the geographical distance to the target
+    # Prepare data for calculating the weights
     distanceToTarget = heuristic_Kasia(source, target, coordDict)
+    distance_travelled = 0
+    last_distance = 0
+    total_distance = 0
 
     # The queue stores priority, node, cost to reach, and parent.
     # Uses Python heapq to keep in priority order.
@@ -217,7 +225,7 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
     while queue:
         # Pop the smallest item from queue.
         _, __, curnode, dist, parent = pop(queue)
-
+                
         if curnode == target:
             path = [curnode]
             node = parent
@@ -233,9 +241,10 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
         explored[curnode] = parent
 
         for neighbor, w in G[curnode].items():
+            
             if neighbor in explored:
                 continue
-            ncost = dist + w.get(weight, 1)
+            ncost = dist + w.get(weight, 1) ## dist = sum of 'DS' values of the previous nodes
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
                 # if qcost <= ncost, a less costly path from the
@@ -245,7 +254,17 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
                 if qcost <= ncost:
                     continue
             else:
-                h = heuristic_Kasia(neighbor, target, coordDict) # 
+                h = heuristic_Kasia(neighbor, target, coordDict)
+                if last_distance == list(list(G[curnode].items())[0])[1]['dist']:
+                    pass
+                else:
+                    last_distance = list(list(G[curnode].items())[0])[1]['dist']
+                    
+                total_distance = total_distance + last_distance ## Add weighted distance here!
+                print(total_distance)
+                
+                #print(list(list(G[curnode].items())[0])[1]['dist'])# powtarzaja sie
+                distance_travelled = distance_travelled + 0
             enqueued[neighbor] = ncost, h
             push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
 
@@ -296,14 +315,13 @@ def main():
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
-    
     # Save results
     # Subset a graph
-    astar_result = network.subgraph(astar)
+    #astar_result = network.subgraph(astar)
     #print(list(astar_result.edges(data=True))[0])
     #print(list(network.edges(data=True))[0])
     # Save as shp
-    nx.write_shp(astar_result, './Results')
+    #nx.write_shp(astar_result, './Results')
     
           
 main()             
