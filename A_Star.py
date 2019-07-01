@@ -2,7 +2,7 @@ import os
 import networkx as nx
 import math 
 import collections
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 cwd = os.getcwd()
 print('cwd: ',cwd)
@@ -12,19 +12,26 @@ print('cwd: ',cwd)
 #######################################################
 
 pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area_with_DS.shp')
-ODnumber = 1
-# OD pairs:
-# 395 - 7775
-# 775 - 2196
-# 2196 - 6767
+# Select Origin-Destination pair:
+ODpair = 1
 
-startNode = 395 # as in the input data
-endNode = 7775 # as in the input data
-# Assign weight:
-# 'LS' = Local Score
-# 'DS' = Distant Score
-# 'TS' = Total Score <- not implemented yet
-networkWeight = 'DS'
+ODnodeNumbers = {
+        1: [395,7775],
+        2: [7775,2196],
+        3: [2196,6767]
+        }
+startNode = ODnodeNumbers[ODpair][0] # as in the input data
+endNode = ODnodeNumbers[ODpair][1] # as in the input data
+
+# Assign weight of scores:
+# 1: TS = 0.5 Local Score + 0.5 Distant Score
+# 2: TS = (DS = 0.8 and LS = 0.8. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8)
+weightScenario = 2
+
+# Assign scaling factor for the Total Score importance in regards to heurestic. 
+# 1: the same importance
+# 2: twice as important...
+TotalScoreToHeuresticScaleFactor = 1
 
 
 #######################################################
@@ -170,13 +177,15 @@ def getKeysByValues(dictOfElements, listOfValues):
 from heapq import heappush, heappop
 from itertools import count
 
-def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore and add later LocalScore
+def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalScore and add later LocalScore
     """Returns a list of nodes in a shortest path between source and target
     using the A* ("A-star") algorithm.
     
     Heurestic function changed to include the dictionairy with the coordinates
     
-    Weight function will be amended on the basics of the distance to the target node
+    Weights used in the function include distant and local scores of the edges
+    
+    Heurestic values are ~100 times higher than edge scores. Theis needs to be included.
 
     """
     def heuristic_Kasia(theNode, theTarget, coordDict):
@@ -203,10 +212,22 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
     
     # Prepare data for calculating the weights
     distanceToTarget = heuristic_Kasia(source, target, coordDict)
-    distance_travelled = 0
-    last_distance = 0
-    total_distance = 0
-
+    print('Max heuristic value (eucidlian distance to destination from the starting node): ', distanceToTarget)
+    print('Max Total Score of the edge: 1')
+    distance_travelled = []
+    # Assign scenario
+    # 1: TS = 0.5 Local Score + 0.5 Distant Score'
+    # 2: TS = (DS = 0.8 and LS = 0.8. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8))
+    if scenario == 1:
+        weightDS = 0.5
+        weightLS = 0.5
+    elif scenario == 2:
+        weightDS = 0.8
+        weightLS = 0.2
+        
+    # Apply the factor to scale the weights (0-1) to match heurestic (0-~1000 m)
+    heuristicCostRatio = 1000
+    
     # The queue stores priority, node, cost to reach, and parent.
     # Uses Python heapq to keep in priority order.
     # Add a counter to the queue to prevent the underlying heap from
@@ -244,7 +265,8 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
             
             if neighbor in explored:
                 continue
-            ncost = dist + w.get(weight, 1) ## dist = sum of 'DS' values of the previous nodes
+                        
+            ncost = dist + TotalScoreToHeuresticScaleFactor * heuristicCostRatio * (weightDS * w.get('DS', 1) + weightLS * w.get('LS', 1)) ## dist = sum of weights
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
                 # if qcost <= ncost, a less costly path from the
@@ -254,20 +276,24 @@ def astar_path_Kasia(G, source, target, weight, coordDict): # weight=GlobalScore
                 if qcost <= ncost:
                     continue
             else:
+                print('wLS:',weightLS, 'wDS', weightDS)
                 h = heuristic_Kasia(neighbor, target, coordDict)
-                if last_distance == list(list(G[curnode].items())[0])[1]['dist']:
+                if scenario==2:
+                    distance_travelled.append(h)
+                    weightDS = 0.6/distance_travelled[0] * h + 0.2
+                    weightLS = (-0.6)/distance_travelled[0] * h + 0.8
+
+                '''if last_distance == list(list(G[curnode].items())[0])[1]['dist']:
                     pass
                 else:
                     last_distance = list(list(G[curnode].items())[0])[1]['dist']
                     
                 total_distance = total_distance + last_distance ## Add weighted distance here!
-                print(total_distance)
+                print(total_distance)'''
                 
-                #print(list(list(G[curnode].items())[0])[1]['dist'])# powtarzaja sie
-                distance_travelled = distance_travelled + 0
             enqueued[neighbor] = ncost, h
             push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
-
+            
     raise nx.NetworkXNoPath("Node %s not reachable from %s" % (target, source))
 
 #######################################################
@@ -309,9 +335,14 @@ def main():
     ##### Run A Star alghoritm #####
     print('Start node: ', startNode)
     print('End node: ', endNode)
-    print('Network cost: ', networkWeight)
-    astar = astar_path_Kasia(network,startNode,endNode,networkWeight, posNodes)
-    print('Results of A Star algorithm, using networx IDs:')
+    #print('Network cost: ', networkWeight)
+    print('Weight scenario: ', weightScenario)
+    print('TS - Total Score, DS - Distant Score, LS - Local Score')
+    print('   1: TS = 0.5 LS + 0.5 DS')
+    print('   2: TS = (DS = 0.8 and LS = 0.8. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8))')
+    print('Scale factor of the Total Score in reagrds to heurestic: ',TotalScoreToHeuresticScaleFactor)
+    astar = astar_path_Kasia(network,startNode,endNode,weightScenario, posNodes)
+    print('Results of A Star algorithm:')
     print(astar)
     shortestPathAStar = drawShortestPath(network,astar,posNodes)
     shortestPathAStar
