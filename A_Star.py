@@ -31,7 +31,7 @@ weightScenario = 2
 # Assign scaling factor for the Total Score importance in regards to heurestic. 
 # 1: the same importance
 # 2: twice as important...
-TotalScoreToHeuresticScaleFactor = 1
+TotalScoreToHeuresticScaleFactor = 0.2
 
 
 #######################################################
@@ -214,7 +214,6 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
     distanceToTarget = heuristic_Kasia(source, target, coordDict)
     print('Max heuristic value (eucidlian distance to destination from the starting node): ', distanceToTarget)
     print('Max Total Score of the edge: 1')
-    distance_travelled = []
     # Assign scenario
     # 1: TS = 0.5 Local Score + 0.5 Distant Score'
     # 2: TS = (DS = 0.8 and LS = 0.8. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8))
@@ -266,6 +265,11 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
             if neighbor in explored:
                 continue
                         
+            # If the weight are linear, calculate the weights, depending on their eucidlian distance to the destination
+            if scenario==2:
+                weightDS = 0.6/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + 0.2
+                weightLS = (-0.6)/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + 0.8
+                        
             ncost = dist + TotalScoreToHeuresticScaleFactor * heuristicCostRatio * (weightDS * w.get('DS', 1) + weightLS * w.get('LS', 1)) ## dist = sum of weights
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
@@ -276,21 +280,8 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
                 if qcost <= ncost:
                     continue
             else:
-                print('wLS:',weightLS, 'wDS', weightDS)
                 h = heuristic_Kasia(neighbor, target, coordDict)
-                if scenario==2:
-                    distance_travelled.append(h)
-                    weightDS = 0.6/distance_travelled[0] * h + 0.2
-                    weightLS = (-0.6)/distance_travelled[0] * h + 0.8
-
-                '''if last_distance == list(list(G[curnode].items())[0])[1]['dist']:
-                    pass
-                else:
-                    last_distance = list(list(G[curnode].items())[0])[1]['dist']
-                    
-                total_distance = total_distance + last_distance ## Add weighted distance here!
-                print(total_distance)'''
-                
+               
             enqueued[neighbor] = ncost, h
             push(queue, (ncost + h, next(c), neighbor, ncost, curnode))
             
@@ -339,7 +330,7 @@ def main():
     print('Weight scenario: ', weightScenario)
     print('TS - Total Score, DS - Distant Score, LS - Local Score')
     print('   1: TS = 0.5 LS + 0.5 DS')
-    print('   2: TS = (DS = 0.8 and LS = 0.8. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8))')
+    print('   2: TS = (DS = 0.8 and LS = 0.2. Linear change of DS and LS towards the destination till DS = 0.2 and LS = 0.8))')
     print('Scale factor of the Total Score in reagrds to heurestic: ',TotalScoreToHeuresticScaleFactor)
     astar = astar_path_Kasia(network,startNode,endNode,weightScenario, posNodes)
     print('Results of A Star algorithm:')
@@ -348,11 +339,18 @@ def main():
     shortestPathAStar
     # Save results
     # Subset a graph
-    #astar_result = network.subgraph(astar)
-    #print(list(astar_result.edges(data=True))[0])
+    astar_result = network.subgraph(astar)
+    print(list(astar_result.edges(data=True))[0])
     #print(list(network.edges(data=True))[0])
     # Save as shp
     #nx.write_shp(astar_result, './Results')
+    
+    import pyshp
+    result_coords=[]
+    for i in astar_result:
+        node=astar_result.node[i]
+        result_coords.append([float(node['lon']),float(node['lat'])])
+    result = pyshp.shapefile.Writer(shapefile.POLYLINE)
     
           
 main()             
