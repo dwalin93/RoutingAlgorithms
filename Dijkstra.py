@@ -1,131 +1,238 @@
 import os
 import networkx as nx
-import math 
+from heapq import heappush, heappop
+from itertools import count
+import preprocessing as pre
+import shp
 import collections
 
 cwd = os.getcwd()
 print(cwd)
 
-def readData(path):
-    return nx.read_shp(path)
 
-def createNetwork(posNodes,edg):
-    network = nx.Graph()
-    network.add_nodes_from(posNodes.keys())
-    network.add_edges_from(edg)
-    return network
- 
-def drawNetwork(network,posNodes):
-    nx.draw_networkx_nodes(network,posNodes,node_size=10, node_color='r')
-    nx.draw_networkx_edges(network,posNodes)
-    return 
- 
-def drawShortestPath(network,shortestPath,posNodes):
-    node_colors = ["blue" if n in shortestPath else "white" for n in network.nodes()]
-    edge_colors = ["blue" if n in shortestPath else "white" for n in network.edges()]
-    nx.draw_networkx_nodes(network,posNodes,node_size=1, node_color=node_colors)
-    nx.draw_networkx_edges(network,posNodes,edge_color=edge_colors)
-    return
+####Implementation of Dijkstra shortest path. Code taken from https://github.com/networkx/networkx####
+def getAdj(neighbours,u):
+    return neighbours.get(u)['adj']
 
-def getPositionOfNodesFromEdges(nodes):
-    pos = {index:value for index,value in enumerate(nodes.nodes())}
-    return pos
+def getNeighbours(neighbours,u):
+    return neighbours.get(u)['neighbours']
 
-def getPositionOfEdges(edges):
-    lines = [set(x) for x in edges.edges()]
-    return lines
 
-def createDictFromEdgesCoords(edges,edg):
-    startEast = []
-    startNorth = []
-    endEast = []
-    endNorth = []
-    coordsDict = {}
+def _weight_function(G, weight, neighboursDict):
+    if callable(weight):
+        return weight
+    # If the weight keyword argument is not callable, we assume it is a
+    # string representing the edge attribute containing the weight of
+    # the edge.
+    if G.is_multigraph():
+        minValue =  lambda u, v, d: min(attr.get(weight, 1) for attr in d.values())
+        return minValue
+    value = lambda u, v, data: data.get(weight, 1)  
+    return value
+
+def dijkstra_path(G, source, target,neighborsDict, weight='weight'):
+    (length, path) = single_source_dijkstra(G, source,neighborsDict, target=target,
+                                            weight=weight)
+    return path
+
+
+def single_source_dijkstra(G, source,neighborsDict, target=None, cutoff=None,
+                           weight='weight'):
+    return multi_source_dijkstra(G, {source},neighborsDict, cutoff=cutoff, target=target,
+                                 weight=weight)
     
-    for x in edges.edges():
-        startEast.append(x[0][0])
-        startNorth.append(x[0][1])
-        endEast.append(x[1][0])
-        endNorth.append(x[1][1])
-            
-    for idx, x in enumerate(startEast):
-        coordsDict.update({list(edg)[idx]:{'startEast': startEast[idx], 'startNorth': startNorth[idx],
-                         'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
-    return coordsDict
-
-def calcDistance(network,edg):
-    distances = {}
-    for idx, x in enumerate(network.edges(data=True)):
-        coords = list(network.edges(data=True))[idx][2]['coord']
-        distance = round(math.sqrt(((coords['endNorth']-coords['startNorth'])**2) +
-                                   ((coords['endEast']-coords['startEast'])**2)),2)
-        distances.update({list(edg)[idx]:{float(distance)}})
-    #Try with algorithm
-    print(distances)
-    print(coords['endNorth'])
-    print(coords['endEast'])
-    print(coords['startNorth'])
-    print(coords['startEast'])
-    return distances 
-
-def calcAdjacency(network):
-    adjacency = [(n, nbrdict) for n, nbrdict in network.adjacency()] 
-    return adjacency
-
-def getAdjacentAndNeigborNodes(adjacentNodes):
-    nodeAdjacencyNeighborsDict = collections.defaultdict(list) 
-    for idx, x in enumerate(adjacentNodes):
-        node = adjacentNodes[idx][0]
-        keys = adjacentNodes[idx][1].keys()
-        nodeAdjacencyNeighborsDict.update({node:{'adj':list(keys)}})
+def multi_source_dijkstra(G, sources,neighborsDict, target=None, cutoff=None,
+                          weight='weight'):
+    if not sources:
+        raise ValueError('sources must not be empty')
+    if target in sources:
+        return (0, [target])
+    weight = _weight_function(G, weight,neighborsDict)
+    paths = {source: [source] for source in sources}  # dictionary of paths
+    dist = _dijkstra_multisource(G, sources, neighborsDict, weight, paths=paths,
+                                 cutoff=cutoff, target=target)
+    if target is None:
+        return (dist, paths)
+    try:
+        return (dist[target], paths[target])
+    except KeyError:
+        raise nx.NetworkXNoPath("No path to {}.".format(target))
         
-    keys = nodeAdjacencyNeighborsDict.keys()
-    for idy, y in enumerate(nodeAdjacencyNeighborsDict):
-        listOfValues = list(nodeAdjacencyNeighborsDict.values())[idy]['adj']
-        listOfKeys = getKeysByValues(nodeAdjacencyNeighborsDict,listOfValues)
-        listOfKeysWithoutDups = removeDuplicatesFromList(listOfKeys)
-        nodeAdjacencyNeighborsDict[list(keys)[idy]].update({'neighbours': listOfKeysWithoutDups})
-    return nodeAdjacencyNeighborsDict
+# Angle: >90 to < 180 and  <181 to >270 REMAINDER       
 
-def removeDuplicatesFromList(x):
-  return list(dict.fromkeys(x))
+def _dijkstra_multisource(G, sources,neighborsDict, weight, pred=None, paths=None,
+                          cutoff=None, target=None):
+    G_succ = G._succ if G.is_directed() else G._adj
 
-def getKeysByValues(dictOfElements, listOfValues):
-    listOfKeys = list()
-    listOfItems = dictOfElements.items()
-    for item  in listOfItems:
-        idx = 0
-        while idx < len(item[1]['adj']):
-            if item[1]['adj'][idx] in listOfValues:
-                listOfKeys.append(item[0]) 
-                idx+=1
+    push = heappush
+    pop = heappop
+    dist = {}  # dictionary of final distances
+    seen = {}
+    # fringe is heapq with 3-tuples (distance,c,node)
+    # use the count c to avoid comparing nodes (may not be able to)
+    c = count()
+    fringe = []
+    #Angle array
+    angles = []
+    for source in sources:
+        if source not in G:
+            raise nx.NodeNotFound("Source {} not in G".format(source))
+        seen[source] = 0
+        push(fringe, (0, next(c), source))
+    while fringe:
+        (d, _, v) = pop(fringe)
+        if v in dist:
+            continue  # already searched this node.
+        dist[v] = d
+        if v == target:
+            break
+        for u, e in G_succ[v].items():
+            print(v)
+            print(u)
+            cost = weight(v, u, e)
+            scaledCost = pre.scaleCosts(cost,)
+            neighbours = getNeighbours(neighborsDict,v)
+            adj = getAdj(neighborsDict,u)
+            for neighbour in neighbours:
+                if(v != neighbour and neighbour in adj):
+                    angle = pre.anglesOfLines(G,v,u,neighbour)
+                    print(angle)
+                    angles.append(angle)
+            if cost is None:
+                continue
+            if not angles:
+                vu_dist = dist[v] + cost 
             else:
-                idx+=1       
-    return  listOfKeys 
+                minAngle = pre.getMinAngle(angles)
+                print(minAngle)
+                vu_dist = dist[v] + cost + minAngle
+                angles = []
+            if cutoff is not None:
+                if vu_dist > cutoff:
+                    continue
+            if u in dist:
+                if vu_dist < dist[u]:
+                    raise ValueError('Contradictory paths found:',
+                                     'negative weights?')
+            elif u not in seen or vu_dist < seen[u]:
+                seen[u] = vu_dist
+                push(fringe, (vu_dist, next(c), u))
+                if paths is not None:
+                    paths[u] = paths[v] + [u]
+                if pred is not None:
+                    pred[u] = [v]
+            elif vu_dist == seen[u]:
+                if pred is not None:
+                    pred[u].append(v)
+
+    # The optional predecessor and path dictionaries can be accessed
+    # by the caller via the pred and paths objects passed as arguments.
+    return dist
+
+
+####Main Function
 
 def main():
     #Read in edges
     pathToEdges = os.path.join(cwd,'data','Muenster_edges.shp')
     edges = nx.read_shp(pathToEdges)
-    posNodes = getPositionOfNodesFromEdges(edges)
-    posEdges = getPositionOfEdges(edges)
-    edg = [tuple(key for key,value in posNodes.items() if value in line) for line in posEdges]
-    network = createNetwork(posNodes,edg)
-    drawNetwork(network,posNodes)
+ 
+    posNodes = pre.getPositionOfNodesFromEdges(edges)
+    print(posNodes.items())
+    
+    #New Edge position 
+    posEdges = pre.getPositionOfEdges(edges)
+
+    #New edge calculation
+    edg = pre.getEdges(posEdges,posNodes)
+    print(edg)
+    
+    #Create min ex
+#    posEd = [[((404627.6926338108, 5759804.560837546), (404626.13222041057, 5759804.512759572))]]
+#    print(posEd[0])
+#    posNo = collections.OrderedDict([(8806, (404626.13222041057, 5759804.512759572)), (8803, (404627.6926338108, 5759804.560837546))])
+#    te = [tuple(key for key,value in posNo.items() if value in line) for line in posEd]
+#    print(te)
+    
+    #pre.getEdges(posEd,posNo)    
+    
+    network = pre.createNetwork(posNodes,edg)
+    
+    #Set position of Nodes for exporting as shp
+    pre.setPosNodes(network, posNodes)
+    #pre.drawNetwork(network,posNodes)
     #Add Weight to edges
     #Get coordinates of edges
-    coordinates = createDictFromEdgesCoords(edges,edg)
+    coordinates = pre.createDictFromEdgesCoords(edges,edg)
     nx.set_edge_attributes(network, name='coord', values=coordinates)
-    print(list(network.edges(data=True))[0][2]['coord'])
+    
+    
+#    for idx, x in enumerate(network.edges(data=True)):
+#        print(list(network.edges(data=True))[idx][2]['dist'])
+    
+#    test = list(network.edges(data=True))[0][2]
+#    print((test))
     #Calc Distance
-    distance = calcDistance(network,edg)
+    distance = pre.calcDistance(network,edg)
+    print(distance)
+    key_max = max(distance.keys(), key=(lambda k: distance[k]))
+    key_min = min(distance.keys(), key=(lambda k: distance[k]))
+    print(key_max)
+    print(key_min)
+    distance.get((8756, 8762))
+    distance.get((4290, 4291))
     print(distance)   
     #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance)
     #Dijkstra
-    dijkstra = nx.dijkstra_path(network,4,8312,weight='dist'[0])
+    
+#    test = pre.getCoords(network,8548,6519)
+#    test2 = pre.anglesOfLines(network,8548,6519,8493)
+#    print(test2)
+    H1 = network.subgraph([24,1946])
+    H = network.edge_subgraph([(24,1946)])
+    nx.draw_networkx_nodes(H1,posNodes,node_size=10, node_color='r')
+    nx.draw_networkx_edges(H,posNodes,edge_color = 'b')
+#    
+#    
+#    test2 = pre.anglesOfLines(network,4,0,4164)
+#    print(test2)
+#    H1 = network.subgraph([4,0,0,4164])
+#    H = network.edge_subgraph([(4,0),(0,4164)])
+#    nx.draw_networkx_nodes(H1,posNodes,node_size=10, node_color='r')
+#    nx.draw_networkx_edges(H,posNodes,edge_color = 'b')
+
+    
+    
+    adjacency = pre.calcAdjacency(network)
+    adjacentAndNeighborNodesDict = pre.getAdjacentAndNeigborNodes(adjacency)
+    #print(adjacentAndNeighborNodesDict)
+#    test = adjacentAndNeighborNodesDict.get(4)
+#    print(test)
+    #TODO get angle from one edge to every other possible edge using adjacent and neighborv dict
+    #--> calculate angle --> Adjust weight for next angle 
+    
+#    network.get_edge_data(8465,8466)
+
+    
+    dijkstra = dijkstra_path(network,4,6519,adjacentAndNeighborNodesDict,weight='dist')
     print(dijkstra)
-    shortestPath = drawShortestPath(network,dijkstra,posNodes)
+    #print(list(network.edges(data = True)))
+    #shortestPath = pre.drawShortestPath(network,dijkstra,posNodes)
+    
+    #print(network.nodes[0])
+    mapping = {old_label:network.nodes[idx]['loc'] for idx, old_label in enumerate(network.nodes())}
+    #print(mapping)
+    #type(mapping[0][0])
+#    H = nx.relabel_nodes(network, mapping)
+#    HD = H.to_directed()
+#    shp.write_shp(H,cwd) # doctest +SKIP
+    
+
+
+
+        
+        
     #Get edges of each node ()
 #    edgesOfNodes = {}
 #    for idx,x in enumerate(network.nodes()):
@@ -149,12 +256,10 @@ def main():
     
     #Reminder for turns: 
     #Compute dijkstra, then change costs of shortest path if there is a turn, compute dijkstra again...
-    adjacency = calcAdjacency(network)
-    adjacentAndNeighborNodesDict = getAdjacentAndNeigborNodes(adjacency)
-    print(adjacentAndNeighborNodesDict)
-
+   
           
-              
+#call main()
+main()              
                 
         
     
