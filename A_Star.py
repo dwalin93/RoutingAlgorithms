@@ -13,7 +13,7 @@ print('cwd: ',cwd)
 
 pathToEdges = os.path.join(cwd,'data_Maicol','Aassee_Edges_area_with_DS.shp')
 # Select Origin-Destination pair:
-ODpair = 1
+ODpair = 3
 
 ODnodeNumbers = {
         1: [395,7775],
@@ -310,6 +310,7 @@ def exportResultsToPoints(astar_result):
             result_LS.append(i[2]['LS'])
             result_DS.append(i[2]['DS'])
             result_dist.append(i[2]['dist'])
+            
         lastNode = listWithResultEdges[len(listWithResultEdges)-1]
         result_coords.append([float(lastNode[2]['coord']['endEast']),float(lastNode[2]['coord']['endNorth'])])
         result_nodes.append(lastNode[0])
