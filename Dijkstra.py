@@ -139,14 +139,14 @@ def main():
  
     posNodes = pre.getPositionOfNodesFromEdges(edges)
     print(posNodes.items())
-    
+
     #New Edge position 
     posEdges = pre.getPositionOfEdges(edges)
-
+    print(posEdges[100])
     #New edge calculation
     edg = pre.getEdges(posEdges,posNodes)
     print(edg)
-    
+    print(list(edges.edges(data=True))[0][0])
     #Create min ex
 #    posEd = [[((404627.6926338108, 5759804.560837546), (404626.13222041057, 5759804.512759572))]]
 #    print(posEd[0])
@@ -157,6 +157,7 @@ def main():
     #pre.getEdges(posEd,posNo)    
     
     network = pre.createNetwork(posNodes,edg)
+    print(network.edges(data=True))
     
     #Set position of Nodes for exporting as shp
     pre.setPosNodes(network, posNodes)
@@ -164,9 +165,9 @@ def main():
     #Add Weight to edges
     #Get coordinates of edges
     coordinates = pre.createDictFromEdgesCoords(edges,edg)
+    print(coordinates)
     nx.set_edge_attributes(network, name='coord', values=coordinates)
-    
-    
+        
 #    for idx, x in enumerate(network.edges(data=True)):
 #        print(list(network.edges(data=True))[idx][2]['dist'])
     
@@ -179,8 +180,8 @@ def main():
     key_min = min(distance.keys(), key=(lambda k: distance[k]))
     print(key_max)
     print(key_min)
-    distance.get((8756, 8762))
-    distance.get((4290, 4291))
+    distance.get((51, 2795))
+    distance.get((6486, 5513))
     print(distance)   
     #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance)

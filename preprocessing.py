@@ -89,9 +89,18 @@ def createDictFromEdgesCoords(edges,edg):
         endEast.append(x[1][0])
         endNorth.append(x[1][1])
             
-    for idx, x in enumerate(startEast):
-        coordsDict.update({list(edg)[idx]:{'startEast': startEast[idx], 'startNorth': startNorth[idx],
+    for idx, x in enumerate(edges.edges(data=True)):
+        u = x[2]['u']
+        v = x[2]['v']
+        nodeArray = [u,v]
+        if(tuple(nodeArray) in edg):
+            coordsDict.update({tuple(nodeArray):{'startEast': startEast[idx], 'startNorth': startNorth[idx],
                          'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
+        else:
+            nodeArray = [v,u]
+            coordsDict.update({tuple(nodeArray):{'startEast': startEast[idx], 'startNorth': startNorth[idx],
+                         'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
+            
     return coordsDict
 
 def calcDistance(network,edg):
@@ -100,8 +109,14 @@ def calcDistance(network,edg):
         coords = list(network.edges(data=True))[idx][2]['coord']
         distance = round(math.sqrt(((coords['endNorth']-coords['startNorth'])**2) +
                                    ((coords['endEast']-coords['startEast'])**2)),2)
-        print(list(edg)[idx])
-        distances.update({list(edg)[idx]:float(distance)})
+        node1 = x[0]
+        node2 = x[1]
+        nodeArray = [node1,node2]
+        if(tuple(nodeArray) in edg):
+            distances.update({tuple(nodeArray):float(distance)})
+        else:
+            nodeArray = [node2,node1]
+            distances.update({tuple(nodeArray):float(distance)})
     #Try with algorithm
     return distances 
 
