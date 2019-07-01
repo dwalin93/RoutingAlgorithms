@@ -287,6 +287,49 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
             
     raise nx.NetworkXNoPath("Node %s not reachable from %s" % (target, source))
 
+def exportResultsToPoints(astar_result):
+        import shapefile
+
+        result_coords = []
+        result_nodes = []
+        
+        result_LS = []
+        result_LS.append(0)
+        result_DS = []
+        result_DS.append(0)
+        result_dist = []
+        result_dist.append(0)
+        
+        listWithResultEdges = list(astar_result.edges(data=True))
+        print(listWithResultEdges)
+        
+        # Save results in lists
+        for i in listWithResultEdges:
+            result_coords.append([float(i[2]['coord']['startEast']),float(i[2]['coord']['startNorth'])])
+            result_nodes.append(i[0])
+            result_LS.append(i[2]['LS'])
+            result_DS.append(i[2]['DS'])
+            result_dist.append(i[2]['dist'])
+        lastNode = listWithResultEdges[len(listWithResultEdges)-1]
+        result_coords.append([float(lastNode[2]['coord']['endEast']),float(lastNode[2]['coord']['endNorth'])])
+        result_nodes.append(lastNode[0])
+        
+        print(result_nodes)
+        
+        resultName = 'OriginDestination'+str(ODpair)
+        result = shapefile.Writer(resultName, shapeType=1)
+        result.field('nodeID', 'N', decimal=0)
+        result.field('LocalScore', 'N', decimal=30)
+        result.field('DistantScore', 'N', decimal=30)
+        result.field('distance', 'N', decimal=30)
+        
+        for i in range(0,len(result_coords)):
+            result.point(result_coords[i][0],(result_coords[i][1]))
+        for i in range(0,len(result_coords)):
+            result.record(result_nodes[i],result_LS[i],result_DS[i], result_dist[i])
+        
+        result.close()
+
 #######################################################
 ####################### Main ##########################
 #######################################################
@@ -340,17 +383,8 @@ def main():
     # Save results
     # Subset a graph
     astar_result = network.subgraph(astar)
-    print(list(astar_result.edges(data=True))[0])
-    #print(list(network.edges(data=True))[0])
-    # Save as shp
-    #nx.write_shp(astar_result, './Results')
-    
-    import pyshp
-    result_coords=[]
-    for i in astar_result:
-        node=astar_result.node[i]
-        result_coords.append([float(node['lon']),float(node['lat'])])
-    result = pyshp.shapefile.Writer(shapefile.POLYLINE)
+    # Save as points
+    exportResultsToPoints(astar_result)
     
           
 main()             
