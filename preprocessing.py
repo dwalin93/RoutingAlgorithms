@@ -98,8 +98,8 @@ def createDictFromEdgesCoords(edges,edg):
                          'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
         else:
             nodeArray = [v,u]
-            coordsDict.update({tuple(nodeArray):{'startEast': startEast[idx], 'startNorth': startNorth[idx],
-                         'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': endEast[idx], 'startNorth': endNorth[idx],
+                         'endEast': startEast[idx], 'endNorth': startNorth[idx]}})
             
     return coordsDict
 
