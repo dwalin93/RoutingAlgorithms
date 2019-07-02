@@ -15,7 +15,7 @@ print('cwd: ',cwd)
 
 
 # Select Origin-Destination pair:
-ODpair = 3
+ODpair = 2
 
 edgePath = 'Aassee_Edges_area_with_DS_new_' + str(ODpair) + '.shp'
 pathToEdges = os.path.join(cwd,'data_Maicol',edgePath)
@@ -23,7 +23,7 @@ pathToEdges = os.path.join(cwd,'data_Maicol',edgePath)
 ODnodeNumbers = {
         1: [395,7775],
         2: [7775,2196],
-        3: [2196,6767]
+        3: [2196,6768]
         }
 startNode = ODnodeNumbers[ODpair][0] # as in the input data
 endNode = ODnodeNumbers[ODpair][1] # as in the input data
