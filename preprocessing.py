@@ -94,12 +94,12 @@ def createDictFromEdgesCoords(edges,edg):
         v = x[2]['v']
         nodeArray = [u,v]
         if(tuple(nodeArray) in edg):
-            coordsDict.update({tuple(nodeArray):{'startEast': startEast[idx], 'startNorth': startNorth[idx],
-                         'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
+                         'endEast': x[1][0], 'endNorth': x[1][1]}})
         else:
             nodeArray = [v,u]
-            coordsDict.update({tuple(nodeArray):{'startEast': endEast[idx], 'startNorth': endNorth[idx],
-                         'endEast': startEast[idx], 'endNorth': startNorth[idx]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
+                         'endEast': x[1][0], 'endNorth': x[1][1]}})
             
     return coordsDict
 
