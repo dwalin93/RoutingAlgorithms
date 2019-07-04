@@ -1,7 +1,50 @@
 import networkx as nx
 import math 
 import collections
+import csv
 
+def calcCosts(network):
+    costDict = {}
+    for edge in network.edges(data = True):
+        dist = edge[2]['dist']
+        scaledDist = (dist - 0.21) / (1193.32-0.21)
+        traffic = edge[2]['traffic']
+        scaledTraffic = (traffic - 0) / (75-0)
+        cost = scaledDist + scaledTraffic
+        key = [edge[0],edge[1]]
+        costDict.update({tuple(key):cost})
+    return costDict
+    
+
+def createCompleteTrafficDict(network,trafficLights):
+    trafficDict = {}
+    for edge in network.edges():
+        trafficDict.update({edge:0})
+    trafficResult = {**trafficDict,**trafficLights}    
+    return trafficResult   
+
+def readcsv(csv_file):
+    result = []
+    with open(csv_file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=';')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                line_count += 1
+            else:
+                result.append((row))
+                line_count += 1
+    return result
+
+def createDictFromTrafficLights(trafficLights):
+    tlDict = {}
+    for trafficlight in trafficLights:
+        tlArray = [trafficlight[0],trafficlight[1]]
+        tlArray = map(int,tlArray)
+        minValue = min(trafficlight[2])
+        print(minValue)
+        tlDict.update({tuple(tlArray):float(trafficlight[2])})
+    return tlDict     
 
 #Preproccesing
 def getEdges(posEd,posNo):
@@ -22,12 +65,13 @@ def getEdges(posEd,posNo):
                 tupleRes = tuple(result)
                 if(tupleRes not in nodeTupleArray):
                     nodeTupleArray.append(tupleRes) 
-    return nodeTupleArray         
+    return nodeTupleArray          
 
 def getKeysByValue(dictOfElements, valueToFind):
+    print('Value ' + str(valueToFind))
     listOfKeys = list()
     listOfItems = dictOfElements.items()
-    for item  in listOfItems:
+    for item in listOfItems:
         if item[1] == valueToFind:
             listOfKeys.append(item[0])        
     return  listOfKeys[0]
@@ -77,29 +121,20 @@ def getPositionOfEdges(edges):
 
 
 def createDictFromEdgesCoords(edges,edg):
-    startEast = []
-    startNorth = []
-    endEast = []
-    endNorth = []
     coordsDict = {}
-    
-    for x in edges.edges():
-        startEast.append(x[0][0])
-        startNorth.append(x[0][1])
-        endEast.append(x[1][0])
-        endNorth.append(x[1][1])
-            
     for idx, x in enumerate(edges.edges(data=True)):
         u = x[2]['u']
         v = x[2]['v']
         nodeArray = [u,v]
         if(tuple(nodeArray) in edg):
-            coordsDict.update({tuple(nodeArray):{'startEast': startEast[idx], 'startNorth': startNorth[idx],
-                         'endEast': endEast[idx], 'endNorth': endNorth[idx]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
+                         'endEast': x[1][0], 'endNorth': x[1][1]}})
         else:
             nodeArray = [v,u]
-            coordsDict.update({tuple(nodeArray):{'startEast': endEast[idx], 'startNorth': endNorth[idx],
-                         'endEast': startEast[idx], 'endNorth': startNorth[idx]}})
+#            coordsDict.update({tuple(nodeArray):{'startEast': x[1][0], 'startNorth': x[1][1],
+#                         'endEast': x[0][0], 'endNorth': x[0][1]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
+                         'endEast': x[1][0], 'endNorth': x[1][1]}})
             
     return coordsDict
 

@@ -18,7 +18,7 @@ def getNeighbours(neighbours,u):
     return neighbours.get(u)['neighbours']
 
 
-def _weight_function(G, weight, neighboursDict):
+def _weight_function(G, weight):
     if callable(weight):
         return weight
     # If the weight keyword argument is not callable, we assume it is a
@@ -87,16 +87,17 @@ def _dijkstra_multisource(G, sources,neighborsDict, weight, pred=None, paths=Non
         if v == target:
             break
         for u, e in G_succ[v].items():
-            print(v)
-            print(u)
+            #print(v)
+            #print(u)
             cost = weight(v, u, e)
-            scaledCost = pre.scaleCosts(cost,)
+            print('COST' + str(cost))
+            break
+            #scaledCost = pre.scaleCosts(cost,0.21,1193.32)
             neighbours = getNeighbours(neighborsDict,v)
             adj = getAdj(neighborsDict,u)
             for neighbour in neighbours:
                 if(v != neighbour and neighbour in adj):
                     angle = pre.anglesOfLines(G,v,u,neighbour)
-                    print(angle)
                     angles.append(angle)
             if cost is None:
                 continue
@@ -104,8 +105,7 @@ def _dijkstra_multisource(G, sources,neighborsDict, weight, pred=None, paths=Non
                 vu_dist = dist[v] + cost 
             else:
                 minAngle = pre.getMinAngle(angles)
-                print(minAngle)
-                vu_dist = dist[v] + cost + minAngle
+                vu_dist = dist[v] + cost + minAngle 
                 angles = []
             if cutoff is not None:
                 if vu_dist > cutoff:
@@ -137,6 +137,7 @@ def main():
     pathToEdges = os.path.join(cwd,'data','Muenster_edges.shp')
     edges = nx.read_shp(pathToEdges)
  
+
     posNodes = pre.getPositionOfNodesFromEdges(edges)
     print(posNodes.items())
 
@@ -181,7 +182,7 @@ def main():
     print(key_max)
     print(key_min)
     distance.get((51, 2795))
-    distance.get((6486, 5513))
+    distance.get((5513, 6486))
     print(distance)   
     #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance)
@@ -215,9 +216,28 @@ def main():
     
 #    network.get_edge_data(8465,8466)
 
+    trafficLights = pre.readcsv(os.path.join(cwd,'traffic_lights.csv'))
+    print(trafficLights)
     
-    dijkstra = dijkstra_path(network,4,6519,adjacentAndNeighborNodesDict,weight='dist')
-    print(dijkstra)
+    trafficDict = pre.createDictFromTrafficLights(trafficLights)
+    print(trafficDict)
+    
+    TrafficDuration = pre.createCompleteTrafficDict(network,trafficDict)
+    print(list(network.edges)[20][2]['traffic'])
+    
+    nx.set_edge_attributes(network, name='traffic', values=TrafficDuration)
+    
+    totalCosts = pre.calcCosts(network)
+    print(totalCosts)
+    
+    nx.set_edge_attributes(network, name='costs', values=totalCosts)
+    
+    dijkstraOD1 = dijkstra_path(network,395,7775,adjacentAndNeighborNodesDict,weight='costs')
+    dijkstraOD2 = dijkstra_path(network,7775,2196,adjacentAndNeighborNodesDict,weight='costs')
+    dijkstraOD3 = dijkstra_path(network,2196,6768,adjacentAndNeighborNodesDict,weight='costs')
+    print(dijkstraOD1)
+    print(dijkstraOD2)
+    print(dijkstraOD3)
     #print(list(network.edges(data = True)))
     #shortestPath = pre.drawShortestPath(network,dijkstra,posNodes)
     
