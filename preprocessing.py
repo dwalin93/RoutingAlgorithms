@@ -3,6 +3,14 @@ import math
 import collections
 import csv
 
+
+def truncate(coord1,coord2, decimals = 11):
+    multiplier = 10 ** decimals
+    coord1 = int(coord1 * multiplier) / multiplier
+    coord2 = int(coord2 * multiplier) / multiplier
+    truncatedCoords = [coord1,coord2]
+    return tuple(truncatedCoords)
+
 def calcCosts(network):
     costDict = {}
     for edge in network.edges(data = True):
@@ -47,6 +55,18 @@ def createDictFromTrafficLights(trafficLights):
     return tlDict     
 
 #Preproccesing
+def getEdgesForAnalysis(posEd,posNo):
+    nodeTupleArray = []
+    for line in posEd:
+        valueFirst = line[0][0]
+        first = getKeysByValue(posNo,valueFirst)
+        valueSecond = line[0][1]
+        second = getKeysByValue(posNo,valueSecond)
+        result = [first,second]
+        tupleRes = tuple(result) 
+        nodeTupleArray.append(tupleRes)  
+    return nodeTupleArray              
+
 def getEdges(posEd,posNo):
     nodeTupleArray = []
     for key,value in posNo.items():
@@ -67,13 +87,21 @@ def getEdges(posEd,posNo):
                     nodeTupleArray.append(tupleRes) 
     return nodeTupleArray          
 
+
+
 def getKeysByValue(dictOfElements, valueToFind):
-    print('Value ' + str(valueToFind))
     listOfKeys = list()
     listOfItems = dictOfElements.items()
     for item in listOfItems:
         if item[1] == valueToFind:
-            listOfKeys.append(item[0])        
+            listOfKeys.append(item[0])
+        else:
+            coordsNode = item[1]
+            coordsEdge = valueToFind
+            coordsNode = truncate(*coordsNode,3)
+            coordsEdge = truncate(*coordsEdge,3)
+            if coordsNode == coordsEdge:
+                listOfKeys.append(item[0])
     return  listOfKeys[0]
 
 def readData(path):
@@ -81,8 +109,8 @@ def readData(path):
 
 def createNetwork(posNodes,edg):
     network = nx.Graph()
-    network.add_nodes_from(posNodes.keys())
     network.add_edges_from(edg)
+    network.add_nodes_from(posNodes.keys())
     return network
 
 def setPosNodes(network,posNodes):
@@ -102,6 +130,8 @@ def drawShortestPath(network,shortestPath,posNodes):
     nx.draw_networkx_edges(network,posNodes,edge_color=edge_colors)
     return
 
+
+# Maybe round values of coordiantes
 def getPositionOfNodesFromEdges(edges):
    posDict = collections.OrderedDict()
    for value in enumerate(edges.edges(data=True)):
@@ -112,6 +142,26 @@ def getPositionOfNodesFromEdges(edges):
         posDict.update({u:coord1})
         posDict.update({v:coord2})
    return posDict
+
+def getPositionOfNodesFromEdgesForAnalysis(edges):
+   posDict = {}
+   for value in enumerate(edges.edges(data=True)):
+        coord1 = truncate(*value[1][0],3)
+        print(coord1)
+        coord2 = truncate(*value[1][1],3)
+        u = value[1][2]['u']
+        v = value[1][2]['v']
+        posDict.update({u:coord1})
+        posDict.update({v:coord2})
+   return posDict
+
+def getPositionOfEdgesForAnalysis(edges):
+    lines = []
+    for x in edges.edges():
+        first = truncate(*x[0],3)
+        second = truncate(*x[1],3)
+        lines.append([(tuple(first),tuple(second))])
+    return lines
 
 def getPositionOfEdges(edges):
     lines = []
@@ -131,10 +181,10 @@ def createDictFromEdgesCoords(edges,edg):
                          'endEast': x[1][0], 'endNorth': x[1][1]}})
         else:
             nodeArray = [v,u]
-#            coordsDict.update({tuple(nodeArray):{'startEast': x[1][0], 'startNorth': x[1][1],
-#                         'endEast': x[0][0], 'endNorth': x[0][1]}})
-            coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
-                         'endEast': x[1][0], 'endNorth': x[1][1]}})
+            coordsDict.update({tuple(nodeArray):{'startEast': x[1][0], 'startNorth': x[1][1],
+                         'endEast': x[0][0], 'endNorth': x[0][1]}})
+            #coordsDict.update({tuple(nodeArray):{'startEast': x[0][0], 'startNorth': x[0][1],
+             #            'endEast': x[1][0], 'endNorth': x[1][1]}})
             
     return coordsDict
 

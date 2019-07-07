@@ -3,7 +3,6 @@ import networkx as nx
 from heapq import heappush, heappop
 from itertools import count
 import preprocessing as pre
-import shp
 import collections
 
 cwd = os.getcwd()
@@ -47,13 +46,14 @@ def multi_source_dijkstra(G, sources,neighborsDict, target=None, cutoff=None,
         raise ValueError('sources must not be empty')
     if target in sources:
         return (0, [target])
-    weight = _weight_function(G, weight,neighborsDict)
+    weight = _weight_function(G, weight)
     paths = {source: [source] for source in sources}  # dictionary of paths
     dist = _dijkstra_multisource(G, sources, neighborsDict, weight, paths=paths,
                                  cutoff=cutoff, target=target)
     if target is None:
         return (dist, paths)
     try:
+        print('dist ' + str(paths[target]))
         return (dist[target], paths[target])
     except KeyError:
         raise nx.NetworkXNoPath("No path to {}.".format(target))
@@ -87,11 +87,8 @@ def _dijkstra_multisource(G, sources,neighborsDict, weight, pred=None, paths=Non
         if v == target:
             break
         for u, e in G_succ[v].items():
-            #print(v)
-            #print(u)
             cost = weight(v, u, e)
-            print('COST' + str(cost))
-            break
+            #print('COST' + str(cost))
             #scaledCost = pre.scaleCosts(cost,0.21,1193.32)
             neighbours = getNeighbours(neighborsDict,v)
             adj = getAdj(neighborsDict,u)
@@ -158,8 +155,8 @@ def main():
     #pre.getEdges(posEd,posNo)    
     
     network = pre.createNetwork(posNodes,edg)
-    print(network.edges(data=True))
-    
+    print('hello')
+    print(network.edges(data =True))
     #Set position of Nodes for exporting as shp
     pre.setPosNodes(network, posNodes)
     #pre.drawNetwork(network,posNodes)
@@ -217,21 +214,24 @@ def main():
 #    network.get_edge_data(8465,8466)
 
     trafficLights = pre.readcsv(os.path.join(cwd,'traffic_lights.csv'))
-    print(trafficLights)
+    #print(trafficLights)
     
     trafficDict = pre.createDictFromTrafficLights(trafficLights)
-    print(trafficDict)
+    #print(trafficDict)
     
     TrafficDuration = pre.createCompleteTrafficDict(network,trafficDict)
-    print(list(network.edges)[20][2]['traffic'])
+    #print(list(network.edges)[20][2]['traffic'])
     
     nx.set_edge_attributes(network, name='traffic', values=TrafficDuration)
     
     totalCosts = pre.calcCosts(network)
-    print(totalCosts)
+    #print(totalCosts)
     
     nx.set_edge_attributes(network, name='costs', values=totalCosts)
     
+    print(network.edges())
+    
+    #dijkstraOD1 = dijkstra_path(network,395,4,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD1 = dijkstra_path(network,395,7775,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD2 = dijkstra_path(network,7775,2196,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD3 = dijkstra_path(network,2196,6768,adjacentAndNeighborNodesDict,weight='costs')
