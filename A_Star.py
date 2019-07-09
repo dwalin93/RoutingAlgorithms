@@ -15,7 +15,7 @@ print('cwd: ',cwd)
 
 
 # Select Origin-Destination pair:
-ODpair = 2
+ODpair = 3
 
 edgePath = 'Aassee_Edges_area_with_DS_new_' + str(ODpair) + '.shp'
 pathToEdges = os.path.join(cwd,'data_Maicol',edgePath)
@@ -32,12 +32,12 @@ endNode = ODnodeNumbers[ODpair][1] # as in the input data
 # 1: TS = 0.5 Local Score + 0.5 Distant Score
 # 2: TS = (DS = w1 and LS = (1-w1). Linear change of DS and LS towards the destination till DS = (1-w1) and LS = w1)
 weightScenario = 2
-w1 = 0.6
+w1 = 0.8
 
 # Assign scaling factor for the Total Score importance in regards to heurestic. 
 # 1: the same importance
 # 2: twice as important...
-TotalScoreToHeuresticScaleFactor = 0.5
+TotalScoreToHeuresticScaleFactor = 5
 
 
 #######################################################
@@ -276,7 +276,7 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
                 weightDS = (2*w1-1)/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + (1-w1)
                 weightLS = (-1)*(2*w1-1)/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + w1
                         
-            ncost = dist + TotalScoreToHeuresticScaleFactor * heuristicCostRatio * (weightDS * w.get('DS', 1) + weightLS * w.get('LS', 1)) ## dist = sum of weights
+            ncost = dist + TotalScoreToHeuresticScaleFactor * heuristicCostRatio * (weightDS * (1-w.get('DS', 1)) + weightLS * (1-w.get('LS', 1))) ## dist = sum of weights
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
                 # if qcost <= ncost, a less costly pathl from the
