@@ -1,10 +1,16 @@
+##################################################################################################
+# Script for creating point shapefile with the results of the A Star algorithm including landmarks
+# Author: Katarzyna Goch
+# Date: 19.07.2019
+##################################################################################################
+
 import os
 import networkx as nx
 import math 
 import collections
 import preprocessing as pre
 import shapefile
-#import matplotlib.pyplot as plt
+
 
 cwd = os.getcwd()
 print('cwd: ',cwd)
@@ -25,19 +31,20 @@ ODnodeNumbers = {
         2: [7775,2196],
         3: [2196,6768]
         }
-startNode = ODnodeNumbers[ODpair][0] # as in the input data
-endNode = ODnodeNumbers[ODpair][1] # as in the input data
+startNode = ODnodeNumbers[ODpair][0] 
+endNode = ODnodeNumbers[ODpair][1]
 
-# Assign weight of scores:
+# Assign scenario for the weight of scores:
 # 1: TS = 0.5 Local Score + 0.5 Distant Score
 # 2: TS = (DS = w1 and LS = (1-w1). Linear change of DS and LS towards the destination till DS = (1-w1) and LS = w1)
 weightScenario = 2
+# For the weightScenaro == 2 assign the initial value of the weight for the distant score
 w1 = 0.8
 
-# Assign scaling factor for the Total Score importance in regards to heurestic. 
+# Assign scaling factor for the Total Score importance in regards to heurestic (distance). 
 # 1: the same importance
 # 2: twice as important...
-TotalScoreToHeuresticScaleFactor = 5
+TotalScoreToHeuresticScaleFactor = 0.5
 
 
 #######################################################
@@ -178,8 +185,8 @@ def getKeysByValues(dictOfElements, listOfValues):
 #
 # Authors: Salim Fadhley <salimfadhley@gmail.com>
 #          Matteo Dell'Amico <matteodellamico@gmail.com>
-"""Shortest paths and path lengths using the A* ("A star") algorithm.
-"""
+# Shortest paths and path lengths using the A* ("A star") algorithm.
+
 from heapq import heappush, heappop
 from itertools import count
 
@@ -191,8 +198,6 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
     
     Weights used in the function include distant and local scores of the edges
     
-    Heurestic values are ~100 times higher than edge scores. Theis needs to be included.
-
     """
     def heuristic_Kasia(theNode, theTarget, coordDict):
         nodeX = coordDict[theNode][0]
@@ -206,15 +211,8 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
         msg = 'Either source {} or target {} is not in G'
         raise nx.NodeNotFound(msg.format(source, target))
 
-    '''if heuristic_Kasia is None:
-        # The default heuristic is h=0 - same as Dijkstra's algorithm
-        def heuristic_Kasia(u, v):
-            return 0'''
-
     push = heappush
     pop = heappop
-    
-    # Weight of the Global Score and Local Score will depend on the distance of each node to the target
     
     # Prepare data for calculating the weights
     distanceToTarget = heuristic_Kasia(source, target, coordDict)
@@ -230,6 +228,7 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
         weightDS = w1
         weightLS = (1-w1)
         
+    # Heurestic values are ~1000 times higher than edge scores.
     # Apply the factor to scale the weights (0-1) to match heurestic (0-~1000 m)
     heuristicCostRatio = 1000
     
@@ -276,6 +275,7 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
                 weightDS = (2*w1-1)/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + (1-w1)
                 weightLS = (-1)*(2*w1-1)/distanceToTarget * heuristic_Kasia(neighbor, target, coordDict) + w1
                         
+            # Calculate the cost of the link.Cost of the link includes the scaling of factors, scaling of heurestic and the weighted scores of landmarks (1-landmarkScore, to be included as cost)
             ncost = dist + TotalScoreToHeuresticScaleFactor * heuristicCostRatio * (weightDS * (1-w.get('DS', 1)) + weightLS * (1-w.get('LS', 1))) ## dist = sum of weights
             if neighbor in enqueued:
                 qcost, h = enqueued[neighbor]
@@ -293,16 +293,11 @@ def astar_path_Kasia(G, source, target, scenario, coordDict): # weight=GlobalSco
             
     raise nx.NetworkXNoPath("Node %s not reachable from %s" % (target, source))
 
-def exportResultsToPoints(astar_result, keyNodes):  # PROBLEMS WITH THE ORDER OF NODES ==> WRONG COOORDINATES
+def exportResultsToPoints(astar_result, keyNodes): 
 
         result_coords = []
-        #result_nodes = []
-        
-        #keyNodes = astar
         
         print(keyNodes)
-        
-        # Create dict nodeID: [LS,DS,dist,coords]
         
         result_LS = []
         result_LS.append(0)
@@ -317,7 +312,6 @@ def exportResultsToPoints(astar_result, keyNodes):  # PROBLEMS WITH THE ORDER OF
         # Save results in lists
         for i in listWithResultEdges:
             result_coords.append([float(i[2]['coord']['startEast']),float(i[2]['coord']['startNorth'])])
-            #result_nodes.append(i[0])
             
             result_LS.append(i[2]['LS'])
             result_DS.append(i[2]['DS'])
@@ -325,11 +319,9 @@ def exportResultsToPoints(astar_result, keyNodes):  # PROBLEMS WITH THE ORDER OF
             
         lastNode = listWithResultEdges[len(listWithResultEdges)-1]
         result_coords.append([float(lastNode[2]['coord']['endEast']),float(lastNode[2]['coord']['endNorth'])])
-        #result_nodes.append(lastNode[0])
         
         resultName = 'OriginDestination'+str(ODpair)
         result = shapefile.Writer(resultName, shapeType=1)
-        #result.field('nodeID', 'N', decimal=0)
         result.field('LocalScore', 'N', decimal=30)
         result.field('DistantScore', 'N', decimal=30)
         result.field('distance', 'N', decimal=30)
@@ -337,7 +329,6 @@ def exportResultsToPoints(astar_result, keyNodes):  # PROBLEMS WITH THE ORDER OF
         for i in range(0,len(result_coords)):
             result.point(result_coords[i][0],(result_coords[i][1]))
         for i in range(0,len(result_coords)):
-            #result.record(result_nodes[i],result_LS[i],result_DS[i], result_dist[i])
             result.record(result_LS[i],result_DS[i], result_dist[i])
         
         result.close()
