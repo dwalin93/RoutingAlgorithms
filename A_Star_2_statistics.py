@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+Script summarizing outputs of the A Star algorithm including landmarks.
+Output file provides statistics of the generated routes.
+
 Created on Thu Jul  4 11:00:19 2019
 
-@author: erazer
+Author: Katarzyna Goch
 """
 
 import ogr

@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+
+Script to read the distant score from the visibility analysis.
+Output needs to be post-processed in GIS
+
 Created on Sun Jun 30 16:23:46 2019
 
-@author: Kasia
+Author: Katarzyna Goch
 
 """
 import os
@@ -66,16 +70,13 @@ def nodeDSfromShp(sightlineDS, buildingsGS):
         else:
             nodesBuildings[nodeID] = buildingGlobalScore
     print(nodesBuildings)
-        
-        #sightlineBuildings[s][1] = buildingID
     return nodesBuildings
 
        
-buildingsGS = buildingGlobalScoreFromShp(r"data_Mutaz/Buildings_Aassee_Scores.shp")
-nodesWithGS = nodeDSfromShp(r"data_Mutaz/new/b222.shp",buildingsGS)
+buildingsGS = buildingGlobalScoreFromShp(r"data_visibility/Buildings_Aassee_Scores.shp")
+# Data for the OD pair no 2:
+nodesWithGS = nodeDSfromShp(r"data_visibility/b222.shp",buildingsGS)
 
 with open('newMutaz2.csv', 'w') as f:
     for key in nodesWithGS.keys():
         f.write("%s,%s\n"%(key,nodesWithGS[key]))
-
-#addDistantScoreToNodes("data_Maicol/Aassee_Nodes.shp",nodesWithGS)
