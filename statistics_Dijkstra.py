@@ -2,7 +2,7 @@ import preprocessing as pre
 import networkx as nx
 import os
 import glob
-import statistics 
+
 
 cwd = os.getcwd()
 
@@ -52,11 +52,10 @@ def analyseODFromDijkstra():
     angularChange = []
     waitingTime = []
     #Read in edges
-    path = os.path.join(cwd,'dijkstraNodesAndEdges','OD EDGES','*.shp')
+    path = os.path.join(cwd,'Results','Dijkstra','*.shp')
     files = glob.glob(path)
     files
     for file in files:
-        print(file)
         #edges = nx.read_shp(file)
         edges = nx.read_shp(file)
         #print(list(edges.edges(data=True))[12])
@@ -104,7 +103,6 @@ def analyseODFromPedestrians():
     files = glob.glob(path)
     files
     for file in files:
-        print(file)
         #edges = nx.read_shp(file)
         edges = nx.read_shp(file)
         #print(list(edges.edges(data=True))[12])
@@ -149,28 +147,22 @@ def main():
     totalAngDijkstra = []
     totalWaitingDijkstra = []
     PedestrianRoutesAngles, PedestrianRoutesWaiting  = analyseODFromPedestrians()
-    print(PedestrianRoutesAngles)
     for angle in PedestrianRoutesAngles:
         sumAngle = sum(angle)
         totalAngularChange.append(sumAngle)
     #print(totalAngularChange)    
-    print(PedestrianRoutesWaiting)
     for waiting in PedestrianRoutesWaiting:
         meanWaiting = sum(waiting)
-        totalWaiting.append(meanWaiting)
-    print(totalWaiting)       
+        totalWaiting.append(meanWaiting)       
     
     DijkstraRoutesAngles, DijkstraRoutesWaiting  = analyseODFromDijkstra()
-    print(DijkstraRoutesAngles)
     for angle in DijkstraRoutesAngles:
         sumAngle = sum(angle)
         totalAngDijkstra.append(sumAngle)
     #print(totalAngularChange)    
-    print(totalAngDijkstra)
     for waiting in DijkstraRoutesWaiting:
         meanWaiting = sum(waiting)
-        totalWaitingDijkstra.append(meanWaiting)
-    print(totalWaitingDijkstra)       
+        totalWaitingDijkstra.append(meanWaiting)      
         
     totalAngularChange = []
     totalWaiting = []

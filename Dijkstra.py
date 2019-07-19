@@ -53,7 +53,6 @@ def multi_source_dijkstra(G, sources,neighborsDict, target=None, cutoff=None,
     if target is None:
         return (dist, paths)
     try:
-        print('dist ' + str(paths[target]))
         return (dist[target], paths[target])
     except KeyError:
         raise nx.NetworkXNoPath("No path to {}.".format(target))
@@ -136,15 +135,15 @@ def main():
  
 
     posNodes = pre.getPositionOfNodesFromEdges(edges)
-    print(posNodes.items())
+    #print(posNodes.items())
 
     #New Edge position 
     posEdges = pre.getPositionOfEdges(edges)
-    print(posEdges[100])
+    #print(posEdges[100])
     #New edge calculation
     edg = pre.getEdges(posEdges,posNodes)
-    print(edg)
-    print(list(edges.edges(data=True))[0][0])
+    #print(edg)
+    #print(list(edges.edges(data=True))[0][0])
     #Create min ex
 #    posEd = [[((404627.6926338108, 5759804.560837546), (404626.13222041057, 5759804.512759572))]]
 #    print(posEd[0])
@@ -155,15 +154,15 @@ def main():
     #pre.getEdges(posEd,posNo)    
     
     network = pre.createNetwork(posNodes,edg)
-    print('hello')
-    print(network.edges(data =True))
+    #print('hello')
+    #print(network.edges(data =True))
     #Set position of Nodes for exporting as shp
     pre.setPosNodes(network, posNodes)
     #pre.drawNetwork(network,posNodes)
     #Add Weight to edges
     #Get coordinates of edges
     coordinates = pre.createDictFromEdgesCoords(edges,edg)
-    print(coordinates)
+    #print(coordinates)
     nx.set_edge_attributes(network, name='coord', values=coordinates)
         
 #    for idx, x in enumerate(network.edges(data=True)):
@@ -173,14 +172,14 @@ def main():
 #    print((test))
     #Calc Distance
     distance = pre.calcDistance(network,edg)
-    print(distance)
+    #print(distance)
     key_max = max(distance.keys(), key=(lambda k: distance[k]))
     key_min = min(distance.keys(), key=(lambda k: distance[k]))
     print(key_max)
     print(key_min)
     distance.get((51, 2795))
     distance.get((5513, 6486))
-    print(distance)   
+    #print(distance)   
     #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance)
     #Dijkstra
@@ -229,7 +228,7 @@ def main():
     
     nx.set_edge_attributes(network, name='costs', values=totalCosts)
     
-    print(network.edges())
+    #print(network.edges())
     
     #dijkstraOD1 = dijkstra_path(network,395,4,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD1 = dijkstra_path(network,395,7775,adjacentAndNeighborNodesDict,weight='costs')
@@ -242,41 +241,12 @@ def main():
     #shortestPath = pre.drawShortestPath(network,dijkstra,posNodes)
     
     #print(network.nodes[0])
-    mapping = {old_label:network.nodes[idx]['loc'] for idx, old_label in enumerate(network.nodes())}
+    #mapping = {old_label:network.nodes[idx]['loc'] for idx, old_label in enumerate(network.nodes())}
     #print(mapping)
     #type(mapping[0][0])
 #    H = nx.relabel_nodes(network, mapping)
 #    HD = H.to_directed()
 #    shp.write_shp(H,cwd) # doctest +SKIP
-    
-
-
-
-        
-        
-    #Get edges of each node ()
-#    edgesOfNodes = {}
-#    for idx,x in enumerate(network.nodes()):
-#        node = list(network.nodes())[idx]
-#        edges = network.edges(node)
-#        edgesOfNodes.update({node:list(edges)})
-#    print(edgesOfNodes) 
-#    print(list(edgesOfNodes.items())[0][0]) 
-#    
-#    #Find dublicate keys using flip method
-#    flipped = {} 
-#    for key, values in edgesOfNodes.items(): 
-#        for value in values:
-#            if value not in flipped: 
-#                flipped[value] = [key] 
-#            else: 
-#                flipped[value].append(key) 
-#  
-#                
-#    print(list(flipped))
-    
-    #Reminder for turns: 
-    #Compute dijkstra, then change costs of shortest path if there is a turn, compute dijkstra again...
    
           
 #call main()
