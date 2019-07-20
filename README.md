@@ -19,6 +19,9 @@ The repository includes two main scripts:
 - [A_Star_1.py](https://github.com/dwalin93/RoutingAlgorithms/blob/dev/A_Star_1.py)
 
 Add further information here
+[A_Star_1.py] script utilises astar_path function from networkX library, created by  Salim Fadhley and Matteo Dell'Amico. 
+The function calculating shortest paths and path lengths using the A* ("A star") algorithm was amended aiming to include the landmark score of the network links as the link cost and the cartesian distance between each node and the final destination as the algorithm heurestic.
+
 ```python
 import foobar
 
