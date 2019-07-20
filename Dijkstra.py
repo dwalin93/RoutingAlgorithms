@@ -133,104 +133,61 @@ def main():
     pathToEdges = os.path.join(cwd,'data','Muenster_edges.shp')
     edges = nx.read_shp(pathToEdges)
  
-
     posNodes = pre.getPositionOfNodesFromEdges(edges)
-    #print(posNodes.items())
 
     #New Edge position 
     posEdges = pre.getPositionOfEdges(edges)
-    #print(posEdges[100])
     #New edge calculation
     edg = pre.getEdges(posEdges,posNodes)
-    #print(edg)
-    #print(list(edges.edges(data=True))[0][0])
-    #Create min ex
-#    posEd = [[((404627.6926338108, 5759804.560837546), (404626.13222041057, 5759804.512759572))]]
-#    print(posEd[0])
-#    posNo = collections.OrderedDict([(8806, (404626.13222041057, 5759804.512759572)), (8803, (404627.6926338108, 5759804.560837546))])
-#    te = [tuple(key for key,value in posNo.items() if value in line) for line in posEd]
-#    print(te)
-    
+   
     #pre.getEdges(posEd,posNo)    
     
     network = pre.createNetwork(posNodes,edg)
-    #print('hello')
-    #print(network.edges(data =True))
+
     #Set position of Nodes for exporting as shp
     pre.setPosNodes(network, posNodes)
     #pre.drawNetwork(network,posNodes)
     #Add Weight to edges
     #Get coordinates of edges
     coordinates = pre.createDictFromEdgesCoords(edges,edg)
-    #print(coordinates)
+
     nx.set_edge_attributes(network, name='coord', values=coordinates)
         
-#    for idx, x in enumerate(network.edges(data=True)):
-#        print(list(network.edges(data=True))[idx][2]['dist'])
-    
-#    test = list(network.edges(data=True))[0][2]
-#    print((test))
     #Calc Distance
     distance = pre.calcDistance(network,edg)
-    #print(distance)
+
     key_max = max(distance.keys(), key=(lambda k: distance[k]))
     key_min = min(distance.keys(), key=(lambda k: distance[k]))
     print(key_max)
     print(key_min)
     distance.get((51, 2795))
     distance.get((5513, 6486))
-    #print(distance)   
+    
     #Apply dist on edges
     nx.set_edge_attributes(network, name='dist', values=distance)
-    #Dijkstra
-    
-#    test = pre.getCoords(network,8548,6519)
-#    test2 = pre.anglesOfLines(network,8548,6519,8493)
-#    print(test2)
+
     H1 = network.subgraph([24,1946])
     H = network.edge_subgraph([(24,1946)])
     nx.draw_networkx_nodes(H1,posNodes,node_size=10, node_color='r')
     nx.draw_networkx_edges(H,posNodes,edge_color = 'b')
-#    
-#    
-#    test2 = pre.anglesOfLines(network,4,0,4164)
-#    print(test2)
-#    H1 = network.subgraph([4,0,0,4164])
-#    H = network.edge_subgraph([(4,0),(0,4164)])
-#    nx.draw_networkx_nodes(H1,posNodes,node_size=10, node_color='r')
-#    nx.draw_networkx_edges(H,posNodes,edge_color = 'b')
 
-    
     
     adjacency = pre.calcAdjacency(network)
     adjacentAndNeighborNodesDict = pre.getAdjacentAndNeigborNodes(adjacency)
-    #print(adjacentAndNeighborNodesDict)
-#    test = adjacentAndNeighborNodesDict.get(4)
-#    print(test)
-    #TODO get angle from one edge to every other possible edge using adjacent and neighborv dict
-    #--> calculate angle --> Adjust weight for next angle 
-    
-#    network.get_edge_data(8465,8466)
 
     trafficLights = pre.readcsv(os.path.join(cwd,'traffic_lights.csv'))
-    #print(trafficLights)
     
     trafficDict = pre.createDictFromTrafficLights(trafficLights)
-    #print(trafficDict)
     
     TrafficDuration = pre.createCompleteTrafficDict(network,trafficDict)
-    #print(list(network.edges)[20][2]['traffic'])
     
     nx.set_edge_attributes(network, name='traffic', values=TrafficDuration)
     
     totalCosts = pre.calcCosts(network)
-    #print(totalCosts)
     
     nx.set_edge_attributes(network, name='costs', values=totalCosts)
     
-    #print(network.edges())
     
-    #dijkstraOD1 = dijkstra_path(network,395,4,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD1 = dijkstra_path(network,395,7775,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD2 = dijkstra_path(network,7775,2196,adjacentAndNeighborNodesDict,weight='costs')
     dijkstraOD3 = dijkstra_path(network,2196,6768,adjacentAndNeighborNodesDict,weight='costs')
