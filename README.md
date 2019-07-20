@@ -24,6 +24,9 @@ The function was extended using not only the shortest distance as cost factor, b
 [A_Star_1.py](https://github.com/dwalin93/RoutingAlgorithms/blob/master/A_Star_1.py) script utilises [astar_path](https://networkx.github.io/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.astar.astar_path.html#networkx.algorithms.shortest_paths.astar.astar_path) function from [networkX](https://github.com/networkx/networkx) library.
 The function calculating shortest paths and path lengths using the A* ("A star") algorithm was amended aiming to include the landmark score of the network links as the link cost and the cartesian distance between each node and the final destination as the algorithm heurestic.
 
+The outputs of the algorithms look like that:
+
+![alt text](./route.png "Route.png")
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
