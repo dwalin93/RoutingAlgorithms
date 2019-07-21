@@ -14,7 +14,11 @@ from osgeo import ogr
 import json
 
 # Calculate the distant score fot the nodes.
-# Import sightlines and buildings with the global score. 
+
+# Import sightlines and buildings with the global score.
+buildingsGS = buildingGlobalScoreFromShp(r"data_visibility/Buildings_Aassee_Scores.shp")
+# Data for the OD pair no 1:
+nodesWithGS = nodeDSfromShp(r"data_visibility/sightlines/Destination1.shp",buildingsGS)
 driver = ogr.GetDriverByName('ESRI Shapefile')
 
 def buildingGlobalScoreFromShp(buildingsDS):
@@ -73,10 +77,6 @@ def nodeDSfromShp(sightlineDS, buildingsGS):
     return nodesBuildings
 
        
-buildingsGS = buildingGlobalScoreFromShp(r"data_visibility/Buildings_Aassee_Scores.shp")
-# Data for the OD pair no 2:
-nodesWithGS = nodeDSfromShp(r"data_visibility/b222.shp",buildingsGS)
-
 with open('newMutaz2.csv', 'w') as f:
     for key in nodesWithGS.keys():
         f.write("%s,%s\n"%(key,nodesWithGS[key]))
