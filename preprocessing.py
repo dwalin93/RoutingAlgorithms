@@ -50,7 +50,6 @@ def createDictFromTrafficLights(trafficLights):
         tlArray = [trafficlight[0],trafficlight[1]]
         tlArray = map(int,tlArray)
         minValue = min(trafficlight[2])
-        print(minValue)
         tlDict.update({tuple(tlArray):float(trafficlight[2])})
     return tlDict     
 
@@ -147,7 +146,6 @@ def getPositionOfNodesFromEdgesForAnalysis(edges):
    posDict = {}
    for value in enumerate(edges.edges(data=True)):
         coord1 = truncate(*value[1][0],3)
-        print(coord1)
         coord2 = truncate(*value[1][1],3)
         u = value[1][2]['u']
         v = value[1][2]['v']
