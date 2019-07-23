@@ -15,16 +15,18 @@ To run the scripts, you need the to install following library (using [pip](https
 
 ## Scripts
 The repository includes two main scripts:
-- [Dijkstra.py](https://github.com/dwalin93/RoutingAlgorithms/blob/dev/Dijkstra.py)
-- [A_Star_1.py](https://github.com/dwalin93/RoutingAlgorithms/blob/dev/A_Star_1.py)
+- [Dijkstra.py](https://github.com/dwalin93/RoutingAlgorithms/blob/master/Dijkstra.py)
+- [A_Star_1.py](https://github.com/dwalin93/RoutingAlgorithms/blob/master/A_Star_1.py)
 
-Add further information here
-```python
-import foobar
+[Dijkstra.py](https://github.com/dwalin93/RoutingAlgorithms/blob/master/Dijkstra.py) script utilises [dijkstra_path](https://networkx.github.io/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.weighted.dijkstra_path.html#networkx.algorithms.shortest_paths.weighted.dijkstra_path) function from [networkX](https://github.com/networkx/networkx) library, created by  Salim Fadhley and Matteo Dell'Amico. 
+The function was extended using not only the shortest distance as cost factor, but also include angular change and possible traffic lights as costs. 
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
-```
+[A_Star_1.py](https://github.com/dwalin93/RoutingAlgorithms/blob/master/A_Star_1.py) script utilises [astar_path](https://networkx.github.io/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.astar.astar_path.html#networkx.algorithms.shortest_paths.astar.astar_path) function from [networkX](https://github.com/networkx/networkx) library.
+The function calculating shortest paths and path lengths using the A* ("A star") algorithm was amended aiming to include the landmark score of the network links as the link cost and the cartesian distance between each node and the final destination as the algorithm heurestic.
+
+The outputs of the algorithms look like that:
+
+![alt text](./route.png "Route.png")
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

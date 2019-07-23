@@ -99,9 +99,8 @@ def analyseODFromPedestrians():
     angularChange = []
     waitingTime = []
     #Read in edges
-    path = os.path.join(cwd,'Routes_part','DigitizedRouteShapeFile','*.shp')
+    path = os.path.join(cwd,'data','Digitized Route Shape File','*.shp')
     files = glob.glob(path)
-    files
     for file in files:
         #edges = nx.read_shp(file)
         edges = nx.read_shp(file)
@@ -150,7 +149,7 @@ def main():
     for angle in PedestrianRoutesAngles:
         sumAngle = sum(angle)
         totalAngularChange.append(sumAngle)
-    #print(totalAngularChange)    
+    
     for waiting in PedestrianRoutesWaiting:
         meanWaiting = sum(waiting)
         totalWaiting.append(meanWaiting)       
@@ -159,14 +158,18 @@ def main():
     for angle in DijkstraRoutesAngles:
         sumAngle = sum(angle)
         totalAngDijkstra.append(sumAngle)
-    #print(totalAngularChange)    
+    
     for waiting in DijkstraRoutesWaiting:
         meanWaiting = sum(waiting)
         totalWaitingDijkstra.append(meanWaiting)      
-        
-    totalAngularChange = []
-    totalWaiting = []
-    totalAngDijkstra = []
-    totalWaitingDijkstra = []
+    
+    print('totalAngularChange')
+    print(totalAngularChange)
+    print('totalWaiting')
+    print(totalWaiting)
+    print('totalAngDijkstra')
+    print(totalAngDijkstra)
+    print('totalWaitingDijkstra')
+    print(totalWaitingDijkstra)
     
 main()    
